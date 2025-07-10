@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Sensor Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>📊 Smart Sensor Dashboard</h1>
+  <h3>Real-time Sensor Data, By:-Harshit Kumar Sharma</h3>
+
+  <div class="chart-container">
+    <canvas id="tempChart"></canvas>
+    <button onclick="downloadChart('tempChart', 'temperature_chart')">⬇️ Download Temperature Chart</button>
+
+    <canvas id="vibChart"></canvas>
+    <button onclick="downloadChart('vibChart', 'vibration_chart')">⬇️ Download Vibration Chart</button>
+  </div>
+
+  <script>
+    const tempData = [];
+    const vibData = [];
+    const labels = [];
+
+    const tempChart = new Chart(document.getElementById('tempChart'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Temperature (°C)',
+          data: tempData,
+          borderColor: 'red',
+          fill: false
+        }]
+      }
+    });
+
+    const vibChart = new Chart(document.getElementById('vibChart'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Vibration (g)',
+          data: vibData,
+          borderColor: 'blue',
+          fill: false
+        }]
+      }
+    });
+
+    async function fetchData() {
+      const res = await fetch('/sensor');
+      const data = await res.json();
+      labels.push(data.timestamp);
+      tempData.push(data.temperature);
+      vibData.push(data.vibration);
+      if (labels.length > 20) {
+        labels.shift();
+        tempData.shift();
+        vibData.shift();
+      }
+      tempChart.update();
+      vibChart.update();
+    }
+
+    setInterval(fetchData, 2000);
+
+    function downloadChart(canvasId, filename) {
+      const canvas = document.getElementById(canvasId);
+      const link = document.createElement('a');
+      link.download = filename + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+  </script>
+</body>
+</html>
